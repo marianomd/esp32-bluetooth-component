@@ -1,0 +1,6 @@
+.codex_tmp/
+__pycache__/
+*.py[cod]
+.esphome/
+.pioenvs/
+.piolibdeps/
