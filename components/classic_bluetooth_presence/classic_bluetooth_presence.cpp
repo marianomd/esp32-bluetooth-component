@@ -37,6 +37,12 @@ void ClassicBluetoothPresence::loop() {
   if (!this->bt_ready_)
     return;
 
+#ifdef USE_ARDUINO
+  if (this->scanning_ && millis() >= this->scan_end_time_) {
+    this->stop_scan_();
+  }
+#endif
+
   this->publish_presence_();
 
   if (this->scan_requested_ && !this->scanning_) {
@@ -82,6 +88,13 @@ void ClassicBluetoothPresence::add_device(const std::string &address, binary_sen
 }
 
 bool ClassicBluetoothPresence::init_bluetooth_() {
+#ifdef USE_ARDUINO
+  if (!this->serial_bt_.begin("ESPHomeBTPresence", true, this->release_ble_)) {
+    ESP_LOGE(TAG, "BluetoothSerial.begin failed");
+    return false;
+  }
+  return true;
+#else
   esp_err_t err;
 
   if (this->release_ble_) {
@@ -136,6 +149,7 @@ bool ClassicBluetoothPresence::init_bluetooth_() {
 
   esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
   return true;
+#endif
 }
 
 bool ClassicBluetoothPresence::parse_address_(const std::string &address, std::array<uint8_t, 6> *out) const {
@@ -153,6 +167,15 @@ bool ClassicBluetoothPresence::parse_address_(const std::string &address, std::a
 }
 
 void ClassicBluetoothPresence::start_scan_() {
+#ifdef USE_ARDUINO
+  if (this->serial_bt_.discoverAsync(ClassicBluetoothPresence::advertised_device_callback_, this->scan_duration_ms_)) {
+    this->scanning_ = true;
+    this->scan_end_time_ = millis() + this->scan_duration_ms_ + 250;
+    ESP_LOGD(TAG, "Started Bluetooth Classic inquiry for %.2f s", this->scan_duration_ms_ / 1000.0f);
+  } else {
+    ESP_LOGE(TAG, "BluetoothSerial.discoverAsync failed");
+  }
+#else
   uint8_t inquiry_len = static_cast<uint8_t>((this->scan_duration_ms_ + 1279) / 1280);
   inquiry_len = std::max<uint8_t>(1, std::min<uint8_t>(48, inquiry_len));
 
@@ -166,8 +189,47 @@ void ClassicBluetoothPresence::start_scan_() {
   } else {
     ESP_LOGE(TAG, "esp_bt_gap_start_discovery failed: %s", esp_err_to_name(err));
   }
+#endif
 }
 
+#ifdef USE_ARDUINO
+void ClassicBluetoothPresence::stop_scan_() {
+  this->serial_bt_.discoverAsyncStop();
+  this->scanning_ = false;
+  this->publish_presence_();
+  ESP_LOGD(TAG, "Bluetooth Classic inquiry finished");
+}
+
+void ClassicBluetoothPresence::advertised_device_callback_(BTAdvertisedDevice *device) {
+  if (active_instance_ != nullptr) {
+    active_instance_->handle_advertised_device_(device);
+  }
+}
+
+void ClassicBluetoothPresence::handle_advertised_device_(BTAdvertisedDevice *device) {
+  if (device == nullptr)
+    return;
+
+  std::string address = device->getAddress().toString(true).c_str();
+  std::string name = device->haveName() ? device->getName() : "";
+
+  if (this->discovery_) {
+    if (device->haveRSSI()) {
+      ESP_LOGI(TAG, "Discovered BT Classic device: %s RSSI=%d name=\"%s\"", address.c_str(), device->getRSSI(),
+               name.c_str());
+    } else {
+      ESP_LOGI(TAG, "Discovered BT Classic device: %s name=\"%s\"", address.c_str(), name.c_str());
+    }
+  }
+
+  for (auto &configured : this->devices_) {
+    if (configured.address_text == address) {
+      configured.last_seen = millis();
+      ESP_LOGD(TAG, "Matched configured device %s", configured.address_text.c_str());
+    }
+  }
+}
+#else
 void ClassicBluetoothPresence::gap_callback_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param) {
   if (active_instance_ != nullptr) {
     active_instance_->handle_gap_event_(event, param);
@@ -234,6 +296,7 @@ void ClassicBluetoothPresence::handle_discovery_result_(esp_bt_gap_cb_param_t *p
     }
   }
 }
+#endif
 
 void ClassicBluetoothPresence::publish_presence_() {
   const uint32_t now = millis();

@@ -9,12 +9,13 @@
 
 #ifdef USE_ARDUINO
 #include <BluetoothSerial.h>
-#endif
-
+#include <BTAdvertisedDevice.h>
+#else
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
 #include "esp_gap_bt_api.h"
+#endif
 
 namespace esphome {
 namespace classic_bluetooth_presence {
@@ -47,13 +48,22 @@ class ClassicBluetoothPresence : public PollingComponent {
   bool init_bluetooth_();
   bool parse_address_(const std::string &address, std::array<uint8_t, 6> *out) const;
   void start_scan_();
+#ifdef USE_ARDUINO
+  void stop_scan_();
+  void handle_advertised_device_(BTAdvertisedDevice *device);
+  static void advertised_device_callback_(BTAdvertisedDevice *device);
+#else
   void handle_gap_event_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
   void handle_discovery_result_(esp_bt_gap_cb_param_t *param);
-  void publish_presence_();
-
   static void gap_callback_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
+#endif
+  void publish_presence_();
   static ClassicBluetoothPresence *active_instance_;
 
+#ifdef USE_ARDUINO
+  BluetoothSerial serial_bt_;
+  uint32_t scan_end_time_{0};
+#endif
   std::vector<Device> devices_;
   bool discovery_{false};
   bool release_ble_{true};

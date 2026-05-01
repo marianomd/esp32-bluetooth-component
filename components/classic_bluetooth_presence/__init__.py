@@ -77,12 +77,13 @@ async def to_code(config):
 
     if CORE.using_arduino:
         cg.add_library("BluetoothSerial", None)
-    if CORE.using_esp_idf:
+    if CORE.is_esp32:
         try:
             from esphome.components import esp32
 
             esp32.add_idf_sdkconfig_option("CONFIG_BT_ENABLED", True)
             esp32.add_idf_sdkconfig_option("CONFIG_BT_CLASSIC_ENABLED", True)
             esp32.add_idf_sdkconfig_option("CONFIG_BT_BLUEDROID_ENABLED", True)
+            esp32.add_idf_sdkconfig_option("CONFIG_BT_SPP_ENABLED", True)
         except Exception:
             pass
