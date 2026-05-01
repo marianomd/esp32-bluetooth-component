@@ -29,6 +29,7 @@ class ClassicBluetoothPresence : public PollingComponent {
   float get_setup_priority() const override { return setup_priority::AFTER_WIFI; }
 
   void set_discovery(bool discovery) { this->discovery_ = discovery; }
+  void set_enabled(bool enabled) { this->enabled_ = enabled; }
   void set_scan_duration(uint32_t scan_duration_ms) { this->scan_duration_ms_ = scan_duration_ms; }
   void set_presence_timeout(uint32_t presence_timeout_ms) { this->presence_timeout_ms_ = presence_timeout_ms; }
   void set_release_ble(bool release_ble) { this->release_ble_ = release_ble; }
@@ -65,6 +66,7 @@ class ClassicBluetoothPresence : public PollingComponent {
   uint32_t scan_end_time_{0};
 #endif
   std::vector<Device> devices_;
+  bool enabled_{false};
   bool discovery_{false};
   bool release_ble_{true};
   bool bt_ready_{false};

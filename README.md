@@ -16,6 +16,7 @@ logger:
   level: DEBUG
 
 classic_bluetooth_presence:
+  enabled: true
   discovery: true
   update_interval: 30s
   startup_delay: 30s
@@ -37,6 +38,7 @@ Copy the address into `bt_addr`, then set `discovery: false` once you no longer 
 ## Options
 
 - `discovery`: log all discovered Bluetooth Classic devices. Defaults to `false`.
+- `enabled`: actually initialize and run Bluetooth Classic. Defaults to `false` so adding the component cannot break boot by itself.
 - `update_interval`: how often a scan is started. Defaults to `30s`.
 - `scan_duration`: inquiry duration. Defaults to `10s`.
 - `presence_timeout`: how long a device remains present after the last successful sighting. Defaults to `90s`.

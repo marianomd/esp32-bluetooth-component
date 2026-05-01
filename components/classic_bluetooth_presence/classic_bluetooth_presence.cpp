@@ -28,15 +28,26 @@ void ClassicBluetoothPresence::setup() {
   }
   active_instance_ = this;
 
+  if (!this->enabled_) {
+    ESP_LOGW(TAG, "Bluetooth Classic scanner is disabled. Set enabled: true to start it.");
+    return;
+  }
+
   if (this->devices_.empty() && !this->discovery_) {
     ESP_LOGW(TAG, "No devices configured and discovery is disabled");
     this->warned_no_devices_ = true;
+    return;
   }
 
   ESP_LOGI(TAG, "Bluetooth Classic scanner will start after %.1f s", this->startup_delay_ms_ / 1000.0f);
 }
 
 void ClassicBluetoothPresence::loop() {
+  if (!this->enabled_ || this->warned_no_devices_) {
+    this->publish_presence_();
+    return;
+  }
+
   if (!this->bt_init_attempted_ && millis() >= this->startup_delay_ms_) {
     this->bt_init_attempted_ = true;
     this->bt_ready_ = this->init_bluetooth_();
@@ -69,7 +80,7 @@ void ClassicBluetoothPresence::loop() {
 }
 
 void ClassicBluetoothPresence::update() {
-  if (!this->bt_ready_)
+  if (!this->enabled_ || this->warned_no_devices_ || !this->bt_ready_)
     return;
 
   if (!this->scanning_) {
@@ -83,6 +94,7 @@ void ClassicBluetoothPresence::update() {
 
 void ClassicBluetoothPresence::dump_config() {
   ESP_LOGCONFIG(TAG, "Classic Bluetooth Presence:");
+  ESP_LOGCONFIG(TAG, "  Enabled: %s", YESNO(this->enabled_));
   ESP_LOGCONFIG(TAG, "  Discovery logging: %s", YESNO(this->discovery_));
   ESP_LOGCONFIG(TAG, "  Scan duration: %.1f s", this->scan_duration_ms_ / 1000.0f);
   ESP_LOGCONFIG(TAG, "  Presence timeout: %.1f s", this->presence_timeout_ms_ / 1000.0f);

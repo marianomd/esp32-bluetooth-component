@@ -19,6 +19,7 @@ CONF_SCAN_DURATION = "scan_duration"
 CONF_PRESENCE_TIMEOUT = "presence_timeout"
 CONF_RELEASE_BLE = "release_ble"
 CONF_STARTUP_DELAY = "startup_delay"
+CONF_ENABLED = "enabled"
 
 MAC_ADDRESS_RE = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
 
@@ -48,6 +49,7 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(ClassicBluetoothPresence),
         cv.Optional(CONF_DISCOVERY, default=False): cv.boolean,
+        cv.Optional(CONF_ENABLED, default=False): cv.boolean,
         cv.Optional(CONF_SCAN_DURATION, default="10s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_PRESENCE_TIMEOUT, default="90s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_RELEASE_BLE, default=False): cv.boolean,
@@ -62,6 +64,7 @@ async def to_code(config):
     await cg.register_component(var, config)
 
     cg.add(var.set_discovery(config[CONF_DISCOVERY]))
+    cg.add(var.set_enabled(config[CONF_ENABLED]))
     cg.add(var.set_scan_duration(config[CONF_SCAN_DURATION].total_milliseconds))
     cg.add(var.set_presence_timeout(config[CONF_PRESENCE_TIMEOUT].total_milliseconds))
     cg.add(var.set_release_ble(config[CONF_RELEASE_BLE]))
