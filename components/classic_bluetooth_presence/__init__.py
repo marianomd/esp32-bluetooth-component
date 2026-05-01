@@ -74,22 +74,25 @@ async def to_code(config):
         sens = await binary_sensor.new_binary_sensor(device_config)
         cg.add(var.add_device(device_config[CONF_BT_ADDR], sens))
 
-    try:
-        from esphome.components.esp32 import include_builtin_idf_component
+    if config[CONF_ENABLED]:
+        cg.add_define("CLASSIC_BLUETOOTH_PRESENCE_ENABLED")
 
-        include_builtin_idf_component("bt")
-    except ImportError:
-        pass
-
-    if CORE.using_arduino:
-        cg.add_library("BluetoothSerial", None)
-    if CORE.is_esp32:
         try:
-            from esphome.components import esp32
+            from esphome.components.esp32 import include_builtin_idf_component
 
-            esp32.add_idf_sdkconfig_option("CONFIG_BT_ENABLED", True)
-            esp32.add_idf_sdkconfig_option("CONFIG_BT_CLASSIC_ENABLED", True)
-            esp32.add_idf_sdkconfig_option("CONFIG_BT_BLUEDROID_ENABLED", True)
-            esp32.add_idf_sdkconfig_option("CONFIG_BT_SPP_ENABLED", True)
-        except Exception:
+            include_builtin_idf_component("bt")
+        except ImportError:
             pass
+
+        if CORE.using_arduino:
+            cg.add_library("BluetoothSerial", None)
+        if CORE.is_esp32:
+            try:
+                from esphome.components import esp32
+
+                esp32.add_idf_sdkconfig_option("CONFIG_BT_ENABLED", True)
+                esp32.add_idf_sdkconfig_option("CONFIG_BT_CLASSIC_ENABLED", True)
+                esp32.add_idf_sdkconfig_option("CONFIG_BT_BLUEDROID_ENABLED", True)
+                esp32.add_idf_sdkconfig_option("CONFIG_BT_SPP_ENABLED", True)
+            except Exception:
+                pass

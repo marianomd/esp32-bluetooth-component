@@ -5,7 +5,7 @@
 
 #include "esphome/core/log.h"
 
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <BluetoothSerial.h>
@@ -65,7 +65,7 @@ void ClassicBluetoothPresence::loop() {
     return;
   }
 
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
   if (this->scanning_ && millis() >= this->scan_end_time_) {
     this->stop_scan_();
   }
@@ -118,7 +118,10 @@ void ClassicBluetoothPresence::add_device(const std::string &address, binary_sen
 }
 
 bool ClassicBluetoothPresence::init_bluetooth_() {
-#ifdef USE_ARDUINO
+#ifndef CLASSIC_BLUETOOTH_PRESENCE_ENABLED
+  ESP_LOGW(TAG, "Bluetooth Classic support was not compiled in because enabled is false");
+  return false;
+#elif defined(USE_ARDUINO)
   if (this->serial_bt_ == nullptr) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -204,7 +207,9 @@ bool ClassicBluetoothPresence::parse_address_(const std::string &address, std::a
 }
 
 void ClassicBluetoothPresence::start_scan_() {
-#ifdef USE_ARDUINO
+#ifndef CLASSIC_BLUETOOTH_PRESENCE_ENABLED
+  ESP_LOGW(TAG, "Bluetooth Classic support was not compiled in because enabled is false");
+#elif defined(USE_ARDUINO)
   auto *serial_bt = static_cast<BluetoothSerial *>(this->serial_bt_);
   if (serial_bt == nullptr) {
     ESP_LOGE(TAG, "BluetoothSerial is not initialized");
@@ -234,7 +239,7 @@ void ClassicBluetoothPresence::start_scan_() {
 #endif
 }
 
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
 void ClassicBluetoothPresence::stop_scan_() {
   auto *serial_bt = static_cast<BluetoothSerial *>(this->serial_bt_);
   if (serial_bt != nullptr) {
@@ -274,7 +279,7 @@ void ClassicBluetoothPresence::handle_advertised_device_(BTAdvertisedDevice *dev
     }
   }
 }
-#else
+#elif defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
 void ClassicBluetoothPresence::gap_callback_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param) {
   if (active_instance_ != nullptr) {
     active_instance_->handle_gap_event_(event, param);

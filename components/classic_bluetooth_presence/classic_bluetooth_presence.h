@@ -7,9 +7,9 @@
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/core/component.h"
 
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
 class BTAdvertisedDevice;
-#else
+#elif defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
@@ -49,11 +49,11 @@ class ClassicBluetoothPresence : public PollingComponent {
   bool init_bluetooth_();
   bool parse_address_(const std::string &address, std::array<uint8_t, 6> *out) const;
   void start_scan_();
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
   void stop_scan_();
   void handle_advertised_device_(BTAdvertisedDevice *device);
   static void advertised_device_callback_(BTAdvertisedDevice *device);
-#else
+#elif defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
   void handle_gap_event_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
   void handle_discovery_result_(esp_bt_gap_cb_param_t *param);
   static void gap_callback_(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
@@ -61,7 +61,7 @@ class ClassicBluetoothPresence : public PollingComponent {
   void publish_presence_();
   static ClassicBluetoothPresence *active_instance_;
 
-#ifdef USE_ARDUINO
+#if defined(USE_ARDUINO) && defined(CLASSIC_BLUETOOTH_PRESENCE_ENABLED)
   void *serial_bt_{nullptr};
   uint32_t scan_end_time_{0};
 #endif
