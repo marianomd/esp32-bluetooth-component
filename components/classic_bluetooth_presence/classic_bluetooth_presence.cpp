@@ -5,6 +5,15 @@
 
 #include "esphome/core/log.h"
 
+#ifdef USE_ARDUINO
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include <BluetoothSerial.h>
+#include <BTAdvertisedDevice.h>
+#pragma GCC diagnostic pop
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 namespace esphome {
 namespace classic_bluetooth_presence {
 
@@ -89,7 +98,14 @@ void ClassicBluetoothPresence::add_device(const std::string &address, binary_sen
 
 bool ClassicBluetoothPresence::init_bluetooth_() {
 #ifdef USE_ARDUINO
-  if (!this->serial_bt_.begin("ESPHomeBTPresence", true, this->release_ble_)) {
+  if (this->serial_bt_ == nullptr) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    this->serial_bt_ = new BluetoothSerial();
+#pragma GCC diagnostic pop
+  }
+  auto *serial_bt = static_cast<BluetoothSerial *>(this->serial_bt_);
+  if (!serial_bt->begin("ESPHomeBTPresence", true, this->release_ble_)) {
     ESP_LOGE(TAG, "BluetoothSerial.begin failed");
     return false;
   }
@@ -168,7 +184,12 @@ bool ClassicBluetoothPresence::parse_address_(const std::string &address, std::a
 
 void ClassicBluetoothPresence::start_scan_() {
 #ifdef USE_ARDUINO
-  if (this->serial_bt_.discoverAsync(ClassicBluetoothPresence::advertised_device_callback_, this->scan_duration_ms_)) {
+  auto *serial_bt = static_cast<BluetoothSerial *>(this->serial_bt_);
+  if (serial_bt == nullptr) {
+    ESP_LOGE(TAG, "BluetoothSerial is not initialized");
+    return;
+  }
+  if (serial_bt->discoverAsync(ClassicBluetoothPresence::advertised_device_callback_, this->scan_duration_ms_)) {
     this->scanning_ = true;
     this->scan_end_time_ = millis() + this->scan_duration_ms_ + 250;
     ESP_LOGD(TAG, "Started Bluetooth Classic inquiry for %.2f s", this->scan_duration_ms_ / 1000.0f);
@@ -194,7 +215,10 @@ void ClassicBluetoothPresence::start_scan_() {
 
 #ifdef USE_ARDUINO
 void ClassicBluetoothPresence::stop_scan_() {
-  this->serial_bt_.discoverAsyncStop();
+  auto *serial_bt = static_cast<BluetoothSerial *>(this->serial_bt_);
+  if (serial_bt != nullptr) {
+    serial_bt->discoverAsyncStop();
+  }
   this->scanning_ = false;
   this->publish_presence_();
   ESP_LOGD(TAG, "Bluetooth Classic inquiry finished");
