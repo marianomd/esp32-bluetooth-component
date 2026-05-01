@@ -18,6 +18,7 @@ logger:
 classic_bluetooth_presence:
   discovery: true
   update_interval: 30s
+  startup_delay: 30s
   scan_duration: 10s
   presence_timeout: 90s
   devices:
@@ -39,7 +40,8 @@ Copy the address into `bt_addr`, then set `discovery: false` once you no longer 
 - `update_interval`: how often a scan is started. Defaults to `30s`.
 - `scan_duration`: inquiry duration. Defaults to `10s`.
 - `presence_timeout`: how long a device remains present after the last successful sighting. Defaults to `90s`.
-- `release_ble`: release BLE memory before enabling Classic Bluetooth. Defaults to `true`. Set it to `false` only if you know you need BLE and your ESP32/framework combination supports coexistence.
+- `startup_delay`: wait this long after boot before initializing Bluetooth Classic. Defaults to `30s`.
+- `release_ble`: release BLE memory before enabling Classic Bluetooth. Defaults to `false`.
 - `devices`: list of binary sensors, each with `name` and `bt_addr`.
 
 ## Notes

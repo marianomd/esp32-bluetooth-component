@@ -18,6 +18,7 @@ CONF_BT_ADDR = "bt_addr"
 CONF_SCAN_DURATION = "scan_duration"
 CONF_PRESENCE_TIMEOUT = "presence_timeout"
 CONF_RELEASE_BLE = "release_ble"
+CONF_STARTUP_DELAY = "startup_delay"
 
 MAC_ADDRESS_RE = re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
 
@@ -49,7 +50,8 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_DISCOVERY, default=False): cv.boolean,
         cv.Optional(CONF_SCAN_DURATION, default="10s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_PRESENCE_TIMEOUT, default="90s"): cv.positive_time_period_milliseconds,
-        cv.Optional(CONF_RELEASE_BLE, default=True): cv.boolean,
+        cv.Optional(CONF_RELEASE_BLE, default=False): cv.boolean,
+        cv.Optional(CONF_STARTUP_DELAY, default="30s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_DEVICES, default=[]): cv.ensure_list(DEVICE_SCHEMA),
     }
 ).extend(cv.polling_component_schema("30s"))
@@ -63,6 +65,7 @@ async def to_code(config):
     cg.add(var.set_scan_duration(config[CONF_SCAN_DURATION].total_milliseconds))
     cg.add(var.set_presence_timeout(config[CONF_PRESENCE_TIMEOUT].total_milliseconds))
     cg.add(var.set_release_ble(config[CONF_RELEASE_BLE]))
+    cg.add(var.set_startup_delay(config[CONF_STARTUP_DELAY].total_milliseconds))
 
     for device_config in config[CONF_DEVICES]:
         sens = await binary_sensor.new_binary_sensor(device_config)

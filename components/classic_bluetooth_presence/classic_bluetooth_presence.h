@@ -32,6 +32,7 @@ class ClassicBluetoothPresence : public PollingComponent {
   void set_scan_duration(uint32_t scan_duration_ms) { this->scan_duration_ms_ = scan_duration_ms; }
   void set_presence_timeout(uint32_t presence_timeout_ms) { this->presence_timeout_ms_ = presence_timeout_ms; }
   void set_release_ble(bool release_ble) { this->release_ble_ = release_ble; }
+  void set_startup_delay(uint32_t startup_delay_ms) { this->startup_delay_ms_ = startup_delay_ms; }
   void add_device(const std::string &address, binary_sensor::BinarySensor *sensor);
 
  protected:
@@ -67,11 +68,13 @@ class ClassicBluetoothPresence : public PollingComponent {
   bool discovery_{false};
   bool release_ble_{true};
   bool bt_ready_{false};
+  bool bt_init_attempted_{false};
   bool scanning_{false};
   bool scan_requested_{false};
   bool warned_no_devices_{false};
   uint32_t scan_duration_ms_{10000};
   uint32_t presence_timeout_ms_{90000};
+  uint32_t startup_delay_ms_{30000};
 };
 
 }  // namespace classic_bluetooth_presence

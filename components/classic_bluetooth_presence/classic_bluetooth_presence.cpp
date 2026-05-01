@@ -33,18 +33,26 @@ void ClassicBluetoothPresence::setup() {
     this->warned_no_devices_ = true;
   }
 
-  this->bt_ready_ = this->init_bluetooth_();
-  if (!this->bt_ready_) {
-    this->mark_failed(LOG_STR("Bluetooth Classic init failed"));
-    return;
-  }
-
-  ESP_LOGI(TAG, "Bluetooth Classic scanner ready");
+  ESP_LOGI(TAG, "Bluetooth Classic scanner will start after %.1f s", this->startup_delay_ms_ / 1000.0f);
 }
 
 void ClassicBluetoothPresence::loop() {
-  if (!this->bt_ready_)
+  if (!this->bt_init_attempted_ && millis() >= this->startup_delay_ms_) {
+    this->bt_init_attempted_ = true;
+    this->bt_ready_ = this->init_bluetooth_();
+    if (!this->bt_ready_) {
+      this->status_set_error(LOG_STR("Bluetooth Classic init failed"));
+      ESP_LOGE(TAG, "Bluetooth Classic init failed; scanner disabled");
+    } else {
+      this->status_clear_error();
+      ESP_LOGI(TAG, "Bluetooth Classic scanner ready");
+    }
+  }
+
+  if (!this->bt_ready_) {
+    this->publish_presence_();
     return;
+  }
 
 #ifdef USE_ARDUINO
   if (this->scanning_ && millis() >= this->scan_end_time_) {
@@ -78,6 +86,7 @@ void ClassicBluetoothPresence::dump_config() {
   ESP_LOGCONFIG(TAG, "  Discovery logging: %s", YESNO(this->discovery_));
   ESP_LOGCONFIG(TAG, "  Scan duration: %.1f s", this->scan_duration_ms_ / 1000.0f);
   ESP_LOGCONFIG(TAG, "  Presence timeout: %.1f s", this->presence_timeout_ms_ / 1000.0f);
+  ESP_LOGCONFIG(TAG, "  Startup delay: %.1f s", this->startup_delay_ms_ / 1000.0f);
   ESP_LOGCONFIG(TAG, "  Release BLE memory: %s", YESNO(this->release_ble_));
   for (const auto &device : this->devices_) {
     LOG_BINARY_SENSOR("  ", "Device", device.sensor);
