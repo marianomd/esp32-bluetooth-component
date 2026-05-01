@@ -14,7 +14,7 @@ ClassicBluetoothPresence *ClassicBluetoothPresence::active_instance_ = nullptr;
 
 void ClassicBluetoothPresence::setup() {
   if (active_instance_ != nullptr && active_instance_ != this) {
-    this->mark_failed("Only one classic_bluetooth_presence hub can be configured");
+    this->mark_failed(LOG_STR("Only one classic_bluetooth_presence hub can be configured"));
     return;
   }
   active_instance_ = this;
@@ -26,7 +26,7 @@ void ClassicBluetoothPresence::setup() {
 
   this->bt_ready_ = this->init_bluetooth_();
   if (!this->bt_ready_) {
-    this->mark_failed("Bluetooth Classic init failed");
+    this->mark_failed(LOG_STR("Bluetooth Classic init failed"));
     return;
   }
 

@@ -8,7 +8,10 @@
 #include "esphome/core/component.h"
 
 #ifdef USE_ARDUINO
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <BluetoothSerial.h>
+#pragma GCC diagnostic pop
 #include <BTAdvertisedDevice.h>
 #else
 #include "esp_bt.h"
@@ -61,7 +64,10 @@ class ClassicBluetoothPresence : public PollingComponent {
   static ClassicBluetoothPresence *active_instance_;
 
 #ifdef USE_ARDUINO
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   BluetoothSerial serial_bt_;
+#pragma GCC diagnostic pop
   uint32_t scan_end_time_{0};
 #endif
   std::vector<Device> devices_;
