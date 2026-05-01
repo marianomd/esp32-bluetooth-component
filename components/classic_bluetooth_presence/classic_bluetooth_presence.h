@@ -7,6 +7,10 @@
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/core/component.h"
 
+#ifdef USE_ARDUINO
+#include <BluetoothSerial.h>
+#endif
+
 #include "esp_bt.h"
 #include "esp_bt_device.h"
 #include "esp_bt_main.h"
